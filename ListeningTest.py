@@ -5,7 +5,6 @@ s = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_TCP)
 
 while True:
     packet = s.recvfrom(65565)
-    print packet[1]
     packet = packet[0]
     ip_header = packet[0:20]
     unpacked_iph = unpack('!BBHHHBBH4s4s', ip_header)

@@ -28,4 +28,4 @@ while True:
     data = packet[header_size:]
 
     if srcIP != '127.0.0.1':
-        print('SrcIP: ' + str(srcIP) + 'DestPort: ' + str(dstPort) + 'Data: ' + data)
+        print('SrcIP: ' + str(srcIP) + ' SrcPort: ' + str(srcPort) + ' Data: ' + data)

@@ -1,29 +1,52 @@
+import os
+import subprocess
+import sys
+import re
+from struct import *
 import socket
-from struct import pack
-from uuid import getnode as get_mac
 
-class arp():
 
-    def __init__(self):
-        arp.packet = [
-            pack('!H', 0x0001),#2 bytes
-            pack('!H', 0x0800),#2 bytes
-            pack('!B', 0x06),#1 byte
-            pack('!B', 0x04),#1 byte
-            pack('!H', 0x0002),#2 bytes (2 = arp reply)
-            pack('!6B', 0x34, 0x97, 0xF6, 0x38, 0x13, 0x47),#6 bytes (Sender mac address)
-            pack('!4B', 0x34, 0x97, 0xF6, 0x38),#4 bytes (Sender ip address)
-            pack('!6B', 0x34, 0x97, 0xF6, 0x38, 0x13, 0x47),#6 bytes (Target mac address)
-            pack('!4B', 0x34, 0x97, 0xF6, 0x38),#4 bytes (Target ip address)
-        ]
-        print(arp.packet)
+def arp_reply(target_ip, sender_ip, sender_mac = 0):
+	s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.SOCK_RAW)
+	s.bind(('enp0s3', socket.SOCK_RAW))
 
-    def reply(self, ip = 'localhost'):
+	#Finds sender_mac
+	if sender_mac == 0:
+		sender_mac = s.getsockname()[4]
+	else:
+		sender_mac = pack('!6B', *[int(x, 16) for x in sender_mac.split(':')])
 
-        s = socket.socket(AF_PACKET, socket.SOCK_RAW, socket.IPPROTO_IP)
-        s.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 0)
-        s.bind(("en1", 0))
-        s.send(arp.packet)
+	#ARPs for the targets mac address
+	target_mac = subprocess.check_output(['arping','-f',target_ip])
+	target_mac = re.search('([0-9A-F]{2}[:]){5}([0-9A-F]{2})', str(target_mac)).group(0)
+	target_mac = pack('6B', *[int(x, 16) for x in target_mac.split(':')])
 
-a = arp()
-a.reply()
+	#Packs target and sender ip's
+	target_ip = pack('!4B', *[int(x) for x in target_ip.split('.')])
+	sender_ip = pack('!4B', *[int(x) for x in sender_ip.split('.')])
+
+	#Creates the ethernet frame
+	arp_packet = [
+		#Ethernet Header
+		target_mac,#Destination mac address
+		s.getsockname()[4],#sender_mac,#Source mac address
+		pack('>H', 0x0806),#Protocol type (ARP = 0x0806)
+
+		#ARP Header
+		pack('>H', 0x0001),#Hardware type (Ethernet(10 Mb) = 1)
+		pack('>H', 0x0800),#Protocol type (IP = 0x0800)
+		pack('>B', 0x06),#Mac address length
+		pack('>B', 0x04),#Ip address length
+		pack('>H', 0x0002),#Opcode (ARP reply = 2)
+		sender_mac,#Sender mac address
+		sender_ip,#Sender ip address
+		target_mac,#Target mac address
+		target_ip#Target ip address
+	]
+
+	#Sends the arp reply
+	s.send(''.join(arp_packet))
+	s.close()
+
+arp_reply('10.14.10.49', '10.14.10.1', '20:B3:99:57:3D:1B')
+

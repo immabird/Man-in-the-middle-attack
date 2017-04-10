@@ -1,4 +1,5 @@
-import socket
+import socket, sys
+from struct import *
 
 s = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_TCP)
 

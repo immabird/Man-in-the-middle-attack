@@ -1,7 +1,7 @@
 import socket, sys
 from struct import *
 
-def listening_to_incoming_packets(Host_One_IP, Host_Two_IP):
+def listen_to_incoming_packets(Host_One_IP, Host_Two_IP):
     s = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_TCP)
 
     while True:
@@ -28,3 +28,5 @@ def listening_to_incoming_packets(Host_One_IP, Host_Two_IP):
 
         if srcIP == Host_One_IP or srcIP == Host_Two_IP:
             print('SrcIP: ' + str(srcIP) + 'DestPort: ' + str(dstPort) + 'Data: ' + str(data))
+
+listen_to_incoming_packets('127.0.0.1', '127.0.0.1')

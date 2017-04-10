@@ -20,11 +20,11 @@ while True:
     tcp_header = packet[ip_header_length:ip_header_length+20]
     unpacked_tcp = unpack('!HHLLBBHHH', tcp_header)
 
-    srcPort = tcph[0]
-    dstPort = tcph[1]
-    tcph_length = tcph[4] >> 4
+    srcPort = unpacked_tcp[0]
+    dstPort = unpacked_tcp[1]
+    unpacked_tcp_length = unpacked_tcp[4] >> 4
 
-    header_size = ip_header_length + tcph_length * 4
+    header_size = ip_header_length + unpacked_tcp_length * 4
 
     data = packet[header_size:]
 

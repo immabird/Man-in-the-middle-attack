@@ -22,7 +22,7 @@ def listen_to_incoming_packets(Host_One_IP, Host_Two_IP):
         #   7 - Checksum (16 bits)
         #   8 - Source IP (32 bits)
         #   9 - Destination IP (32 bits)
-
+        
         ip_header_length = (unpacked_iph[0] & 0xF) * 4
         srcIP = socket.inet_ntoa(unpacked_iph[8])
         dstIP = socket.inet_ntoa(unpacked_iph[9])

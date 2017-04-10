@@ -26,5 +26,5 @@ def listening_to_incoming_packets(Host_One_IP, Host_Two_IP):
 
         data = packet[header_size:]
 
-        if srcIP == Host_One_IP || srcIP == Host_Two_IP:
+        if srcIP == Host_One_IP or srcIP == Host_Two_IP:
             print('SrcIP: ' + str(srcIP) + 'DestPort: ' + str(dstPort) + 'Data: ' + str(data))

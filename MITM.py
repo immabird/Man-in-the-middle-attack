@@ -3,7 +3,7 @@ import subprocess
 import socket
 import sys
 import re
-import thread
+from threading import Thread
 
 
 def arp_reply(target_ip, sender_ip, sender_mac = 0):
@@ -107,5 +107,5 @@ def listen_to_incoming_packets(Host_One_IP, Host_Two_IP):
         if srcIP == Host_One_IP or srcIP == Host_Two_IP or destIP == Host_One_IP or destIP == Host_Two_IP:
             print('SrcIP: ' + str(srcIP) + ' SrcPort: ' + str(srcPort) + ' DestIP: ' + str(dstIP) + ' DestPort: ' + str(dstPort) + '\nData: ' + str(data))
 
-thread.start_new_thread(listen_to_incoming_packets, ('127.0.0.1', '127.0.0.1'))
+Thread(target=listen_to_incoming_packets, args=('127.0.0.1', '127.0.0.1')).start()
 mitm('10.14.10.49', '10.14.10.1')

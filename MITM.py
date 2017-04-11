@@ -135,7 +135,8 @@ def listen_to_incoming_packets(Host_One_IP, Host_Two_IP, Host_One_MAC, Host_Two_
 
         header_size = ethAndIP_len + tcp_header_length
 
-        data = unpack('>' + str(len(packet)-header_size-1) + 's', packet[header_size+1:])
+        data = packet[header_size:]
+		data = unpack('>' + str(len(data)) + 's',data)
 
         if srcIP == Host_One_IP or srcIP == Host_Two_IP or dstIP == Host_One_IP or dstIP == Host_Two_IP:
             print('SrcIP: ' + str(srcIP) + ' SrcPort: ' + str(srcPort) + ' DestIP: ' + str(dstIP) + ' DestPort: ' + str(dstPort) + '\nData: ' + str(data))

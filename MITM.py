@@ -56,12 +56,13 @@ def mitm(host1, host2):
 	arp_reply(host2, host1)
 
 def listen_to_incoming_packets(Host_One_IP, Host_Two_IP):
-    s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.IPPROTO_TCP)
+    s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(0x0003))
 
     while True:
         packet = s.recvfrom(65565)
         packet = packet[0]
-		eth_header = packet[:14] #Ethernet header is 14 bytes
+		ethernet_length = 14
+		eth_header = packet[:ethernet_length] #Ethernet header is 14 bytes
 		unpacked_eth = unpack('>6s6sH', eth_header)
 		#  unpacked_eth:
         #-----------------
@@ -72,7 +73,7 @@ def listen_to_incoming_packets(Host_One_IP, Host_Two_IP):
 
 		print(unpacked_eth[0])
 
-        ip_header = packet[0:20]
+        ip_header = packet[ethernet_length:ethernet_length+20]
         unpacked_iph = unpack('>BBHHHBBH4s4s', ip_header)
         #  unpacked_iph:
         #-----------------
@@ -92,7 +93,8 @@ def listen_to_incoming_packets(Host_One_IP, Host_Two_IP):
         srcIP = socket.inet_ntoa(unpacked_iph[8])
         dstIP = socket.inet_ntoa(unpacked_iph[9])
 
-        tcp_header = packet[ip_header_length:ip_header_length+20]
+		ethAndIP_len = ethernet_length+ip_header_length
+        tcp_header = packet[ethAndIP_len:ethAndIP_len+20]
         unpacked_tcp = unpack('>HHLLBBHHH', tcp_header)
         #  unpacked_tcp:
         #-----------------
@@ -111,7 +113,7 @@ def listen_to_incoming_packets(Host_One_IP, Host_Two_IP):
         dstPort = unpacked_tcp[1]
         tcp_header_length = (unpacked_tcp[4] >> 4) * 4
 
-        header_size = ip_header_length + tcp_header_length
+        header_size = ethAndIP_len + tcp_header_length
 
         data = packet[header_size:]
 

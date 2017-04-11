@@ -108,7 +108,7 @@ def listen_to_incoming_packets(Host_One_IP, Host_Two_IP):
 
         data = packet[header_size:]
 
-        if srcIP == Host_One_IP or srcIP == Host_Two_IP or destIP == Host_One_IP or destIP == Host_Two_IP:
+        if srcIP == Host_One_IP or srcIP == Host_Two_IP or dstIP == Host_One_IP or dstIP == Host_Two_IP:
             print('SrcIP: ' + str(srcIP) + ' SrcPort: ' + str(srcPort) + ' DestIP: ' + str(dstIP) + ' DestPort: ' + str(dstPort) + '\nData: ' + str(data))
 
 Thread(target=listen_to_incoming_packets, args=('192.168.1.100', '192.168.1.101')).start()

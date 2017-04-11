@@ -1,18 +1,19 @@
-import os
-import subprocess
-import sys
-import re
 from struct import *
+import subprocess
 import socket
+import re
 
 
 def arp_reply(target_ip, sender_ip, sender_mac = 0):
-	s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.SOCK_RAW)
+	s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW)
 	s.bind(('enp0s3', socket.SOCK_RAW))
+
+	#Gets the mac address for this computer
+	this_mac = s.getsockname()[4]
 
 	#Finds sender_mac
 	if sender_mac == 0:
-		sender_mac = s.getsockname()[4]
+		sender_mac = this_mac
 	else:
 		sender_mac = pack('!6B', *[int(x, 16) for x in sender_mac.split(':')])
 
@@ -29,7 +30,7 @@ def arp_reply(target_ip, sender_ip, sender_mac = 0):
 	arp_packet = [
 		#Ethernet Header
 		target_mac,#Destination mac address
-		s.getsockname()[4],#sender_mac,#Source mac address
+		this_mac,#sender_mac,#Source mac address
 		pack('>H', 0x0806),#Protocol type (ARP = 0x0806)
 
 		#ARP Header
@@ -45,8 +46,8 @@ def arp_reply(target_ip, sender_ip, sender_mac = 0):
 	]
 
 	#Sends the arp reply
-	s.send(''.join(arp_packet))
+	s.send(b''.join(arp_packet))
 	s.close()
 
-arp_reply('10.14.10.49', '10.14.10.1', '20:B3:99:57:3D:1B')
+arp_reply('10.14.10.49', '10.14.10.1')
 

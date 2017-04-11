@@ -60,11 +60,22 @@ def mitm(host1, host2, mac1 = 0, mac2 = 0):
 	return [host1_mac, host2_mac]
 
 def listen_to_incoming_packets(Host_One_IP, Host_Two_IP):
-    s = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_TCP)
+    s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.IPPROTO_TCP)
 
     while True:
         packet = s.recvfrom(65565)
         packet = packet[0]
+		eth_header = packet[:14] #Ethernet header is 14 bytes
+		unpacked_eth = unpack('>6s6sH', eth_header)
+		#  unpacked_eth:
+        #-----------------
+        #  index:
+        #   0 -  Destination MAC Address (48 bits)
+        #   1 - Source MAC Address (48 bits)
+        #   2 - EtherType (16 bits)
+
+		print(unpacked_eth[0])
+
         ip_header = packet[0:20]
         unpacked_iph = unpack('>BBHHHBBH4s4s', ip_header)
         #  unpacked_iph:

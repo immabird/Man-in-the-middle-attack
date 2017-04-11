@@ -3,6 +3,7 @@ import subprocess
 import socket
 import sys
 import re
+import thread
 
 
 def arp_reply(target_ip, sender_ip, sender_mac = 0):
@@ -71,7 +72,7 @@ def listen_to_incoming_packets(Host_One_IP, Host_Two_IP):
         #   7 - Checksum (16 bits)
         #   8 - Source IP (32 bits)
         #   9 - Destination IP (32 bits)
-        
+
         ip_header_length = (unpacked_iph[0] & 0xF) * 4
         srcIP = socket.inet_ntoa(unpacked_iph[8])
         dstIP = socket.inet_ntoa(unpacked_iph[9])
@@ -99,9 +100,8 @@ def listen_to_incoming_packets(Host_One_IP, Host_Two_IP):
 
         data = packet[header_size:]
 
-        if srcIP == Host_One_IP or srcIP == Host_Two_IP:
-            print('SrcIP: ' + str(srcIP) + ' DestPort: ' + str(dstPort) + ' Data: ' + str(data))
+        if srcIP == Host_One_IP or srcIP == Host_Two_IP or destIP == Host_One_IP or destIP == Host_Two_IP:
+            print('SrcIP: ' + str(srcIP) + ' SrcPort: ' + str(srcPort) + ' DestIP: ' + str(dstIP) + ' DestPort: ' + str(dstPort) + '\nData: ' + str(data))
 
-listen_to_incoming_packets('127.0.0.1', '127.0.0.1')
+thread.start_new_thread(listen_to_incoming_packets, ('127.0.0.1', '127.0.0.1'))
 arp_reply('10.14.10.49', '10.14.10.1')
-

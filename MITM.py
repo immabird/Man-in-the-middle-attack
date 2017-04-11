@@ -9,7 +9,7 @@ import re
 
 
 # ARPs for the mac address of an IP
-def get_mac(self, ip):
+def get_mac(ip):
 	mac = str(subprocess.check_output(['arping', '-f', ip]))
 	mac = re.search('([0-9A-F]{2}[:]){5}([0-9A-F]{2})', mac).group(0)
 	return pack('!6B', *[int(x, 16) for x in mac.split(':')])

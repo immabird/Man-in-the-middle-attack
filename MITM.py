@@ -82,8 +82,4 @@ Thread(target=poll_console).start()
 while attacking:
 	poison_arp()
 	sleep(500)
-<<<<<<< HEAD
 restore_connection()
-=======
-restore_connection()
->>>>>>> 0b6d49bc2319c4dbbf7125fa01e3f796acccd763

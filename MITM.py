@@ -84,7 +84,7 @@ def listen_to_incoming_packets(Host_One_IP, Host_Two_IP, Host_One_MAC, Host_Two_
         packet = packet[0]
         ethernet_length = 14
         eth_header = packet[:ethernet_length] #Ethernet header is 14 bytes
-        srcMACpacked = eth_header[6:11]
+        srcMACpacked = eth_header[6:12]
         unpacked_eth = unpack('>6s6sH', eth_header)
         #  unpacked_eth:
         #-----------------

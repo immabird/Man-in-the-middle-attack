@@ -128,9 +128,6 @@ def listen_to_incoming_packets(Host_One_IP, Host_Two_IP, Host_One_MAC, Host_Two_
 
             #Forward packet to victim
             new_dst_MAC = None
-            #print(str(srcMAC) + "\n" + str(unpack('>6s', Host_One_MAC)[0]))
-            #print(str(unpack('>6s', Host_Two_MAC)[0])+"\n"+dstIP+"\n"+my_ip)
-
             if srcMAC == unpack('>6s', Host_One_MAC)[0] and dstIP != my_ip:
                 new_dst_MAC = Host_Two_MAC
             elif srcMAC == unpack('>6s', Host_Two_MAC)[0] and dstIP != my_ip:

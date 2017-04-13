@@ -160,7 +160,7 @@ def listen_to_incoming_packets(Host_One_IP, Host_Two_IP, Host_One_MAC, Host_Two_
             header_size = ethAndIP_len + tcp_header_length
 
             data = packet[header_size:]
-            if len(data) > 0 and (dstIP != my_ip and dstIP != "255.255.255.255" and dstIP != "0.0.0.0"):
+            if len(data) > 0 and (dstIP != my_ip and dstIP != "255.255.255.255" and dstIP != "0.0.0.0" and str(srcIP) != "0.0.0.0"):
                 data_string = str(data)
                 print('SrcIP: ' + str(srcIP) + ' SrcPort: ' + str(srcPort) + ' DestIP: ' + str(dstIP) + ' DestPort: ' + str(dstPort) + '\nData: ' + data_string[2:len(data_string)-1])
 

